@@ -21,10 +21,38 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum UserRole {
+  ADMIN
+  RECRUITER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(RECRUITER)
+  createdAt DateTime @default(now())
+
+  applications Application[]
+}
+
+model Candidate {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  resumeUrl String?
+  createdAt DateTime @default(now())
+
+  applications Application[]
+}
+
 model Department {
   id        String   @id @default(uuid())
   name      String   @unique
   createdAt DateTime @default(now())
+
   jobs      Job[]
 }
 
@@ -33,23 +61,13 @@ model Job {
   title        String
   description  String
   requirements String
-  status       JobStatus     @default(OPEN)
+  status       JobStatus    @default(OPEN)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
   departmentId String
   department   Department    @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  applications Application[]
-}
 
-model Candidate {
-  id           String        @id @default(uuid())
-  firstName    String
-  lastName     String
-  email        String        @unique
-  password     String
-  phone        String
-  resumeUrl    String?
-  createdAt    DateTime      @default(now())
   applications Application[]
 }
 
@@ -57,12 +75,17 @@ model Application {
   id          String            @id @default(uuid())
   jobId       String
   candidateId String
+  userId      String?           // מי טיפל במועמד (HR)
+
   status      ApplicationStatus @default(APPLIED)
   notes       String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   job       Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@unique([jobId, candidateId])
 }
